@@ -62,7 +62,8 @@ syn case match
 hi def link nyasmComment      Comment
 hi def link nyasmDocComment   SpecialComment
 hi def link nyasmNumber       Number
-hi def link nyasmString	      String
+hi def link nyasmString	       String
+hi def link nyasmChar         Character
 hi def link nyasmIdentifier   Identifier
 hi def link nyasmRegister     Identifier
 hi def link nyasmOpcode       Keyword
