@@ -10,9 +10,12 @@ syn keyword nyasmRegister a x y
 syn match nyasmOperator display "\%(+\|-\|/\|*\|\^\|\~\|&\||\|!\|>\|<\|%\|=\)=\?"
 syn match nyasmOperator display "&&\|||\|<<\|>>\|\~>"
 
-syn keyword nyasmOpcode ld ldd ldi ldh push pop add adc sub sbc and or xor cp inc dec swap
-syn keyword nyasmOpcode daa cpl ccf scf nop halt stop di ei rlca rla rrca rra rlc rl rrc rr
-syn keyword nyasmOpcode sla sra srl bit set res jp jr call rst ret reti
+syn keyword nyasmOpcode adc and asl bcc bcs beq bit bmi bne bpl bra brk brl bvc bvs
+syn keyword nyasmOpcode clc cld cli clv cmp cop cpx cpy dec dex dey eor inc inx iny
+syn keyword nyasmOpcode jml jmp jsl jsr lda ldx ldy lsr mvn mvp nop ora pea pei per
+syn keyword nyasmOpcode pha phb phd pjk php phx phy pla plb pld plp plx ply
+syn keyword nyasmOpcode rep rol ror rti rtl rts sbc sec sed sei sep sta stp stx sty stz
+syn keyword nyasmOpcode tax tay tcd tcs tdc trb tsb tsc tsx txa txs txy tya tyx wai wdc xba xce
 
 syn match nyasmDirective "\\byte"
 syn match nyasmDirective "\\word"
