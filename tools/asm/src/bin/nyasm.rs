@@ -1165,7 +1165,6 @@ impl<'a> Asm<'a> {
             _ => {
                 if let Some(op) = self.find_opcode(mne.1, Addr::REL) {
                     self.check_opcode(mne.1, Addr::REL)?;
-                    let pos = self.tok().pos();
                     let expr = self.expr()?;
                     if self.emit {
                         let branch = self
@@ -1499,6 +1498,27 @@ impl<'a> Asm<'a> {
                         }
                     }
                     self.add_pc(2)?;
+                    if self.peek()? != Tok::COMMA {
+                        break;
+                    }
+                    self.eat();
+                }
+                self.eol()?;
+            }
+            Tok::LONG => {
+                self.eat();
+                loop {
+                    let pos = self.tok().pos();
+                    let expr = self.expr()?;
+                    if self.emit {
+                        if let Ok(value) = self.const_expr(expr) {
+                            self.write(&self.range_24(value)?.to_le_bytes());
+                        } else {
+                            self.write(&[0xFD, 0xFD, 0xFD]);
+                            self.reloc(0, 3, expr, pos);
+                        }
+                    }
+                    self.add_pc(3)?;
                     if self.peek()? != Tok::COMMA {
                         break;
                     }
@@ -2399,6 +2419,8 @@ impl<'a, R: Read + Seek> TokStream<'a> for Lexer<'a, R> {
                         self.reader.eat();
                         self.string.push(match self.reader.peek()? {
                             Some(b'n') => b'\n',
+                            Some(b'r') => b'\r',
+                            Some(b't') => b'\t',
                             Some(b'\\') => b'\\',
                             Some(b'"') => b'"',
                             Some(b'0') => b'\0',
@@ -2417,14 +2439,28 @@ impl<'a, R: Read + Seek> TokStream<'a> for Lexer<'a, R> {
             Some(b'\'') => {
                 self.reader.eat();
                 if let Some(c) = self.reader.peek()? {
-                    if c.is_ascii_graphic() {
+                    if c == b'\\' {
                         self.reader.eat();
+                        self.number = match self.reader.peek()? {
+                            Some(b'n') => b'\n',
+                            Some(b'r') => b'\r',
+                            Some(b't') => b'\t',
+                            Some(b'\\') => b'\\',
+                            Some(b'\'') => b'\'',
+                            Some(b'0') => b'\0',
+                            _ => return Err(self.err("invalid escape")),
+                        } as i32;
+                    } else {
                         self.number = c as i32;
-                        self.stash = Some(Tok::NUM);
-                        return Ok(Tok::NUM);
                     }
+                    self.reader.eat();
                 }
-                Err(self.err("invalid character"))
+                if self.reader.peek()? != Some(b'\'') {
+                    return Err(self.err("invalid character"));
+                }
+                self.reader.eat();
+                self.stash = Some(Tok::NUM);
+                return Ok(Tok::NUM);
             }
             // idents, and single chars
             Some(c) => {
@@ -2548,7 +2584,7 @@ impl<'a> TokStream<'a> for MacroInvocation<'a> {
         io::Error::new(
             ErrorKind::InvalidData,
             format!(
-                "{}:{}:{}: in macro \"{}\"\n{}:{}:{}: {msg}",
+                "{}:{}:{}: in macro \"{}\"\n\t{}:{}:{}: {msg}",
                 self.pos.file,
                 self.pos.line,
                 self.pos.column,
@@ -2675,10 +2711,7 @@ impl<'a> TokStream<'a> for MacroInvocation<'a> {
     }
 
     fn pos(&self) -> Pos<'a> {
-        match self.inner.toks[self.index] {
-            (_, MacroTok::Arg(index)) => self.args[index][self.arg_index].0,
-            (pos, _) => pos,
-        }
+        self.inner.toks[self.index].0
     }
 }
 
