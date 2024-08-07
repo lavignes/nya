@@ -49,13 +49,13 @@ syn match nyasmDirective "\\native"
 syn match nyasmComment ";.*" contains=nyasmTodo
 syn match nyasmDocComment ";;.*" contains=nyasmTodo
 syn keyword nyasmTodo contained todo fixme xxx warning danger note notice bug
-syn match nyasmEscape "\\."
+syn match nyasmEscape contained "\\."
 syn region nyasmString start=+"+ end=+"+ contains=nyasmEscape
+syn region nyasmChar start=+'+ end=+'+ contains=nyasmEscape
 
 syn match nyasmNumber "[0-9][0-9_]*"
 syn match nyasmNumber "\$[0-9a-fA-F_]\+"
 syn match nyasmNumber "%[01_]\+"
-syn region nyasmChar start=+'+ end=+'+ contains=nyasmEscape
 
 syn case match
 
