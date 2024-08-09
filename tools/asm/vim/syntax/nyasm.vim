@@ -13,7 +13,7 @@ syn match nyasmOperator display "&&\|||\|<<\|>>\|\~>"
 syn keyword nyasmOpcode adc and asl bcc bcs beq bit bmi bne bpl bra brk brl bvc bvs
 syn keyword nyasmOpcode clc cld cli clv cmp cop cpx cpy dec dex dey eor inc inx iny
 syn keyword nyasmOpcode jml jmp jsl jsr lda ldx ldy lsr mvn mvp nop ora pea pei per
-syn keyword nyasmOpcode pha phb phd plk php phx phy pla plb pld plp plx ply
+syn keyword nyasmOpcode pha phb phd phk php phx phy pla plb pld plp plx ply
 syn keyword nyasmOpcode rep rol ror rti rtl rts sbc sec sed sei sep sta stp stx sty stz
 syn keyword nyasmOpcode tax tay tcd tcs tdc trb tsb tsc tsx txa txs txy tya tyx wai wdc xba xce
 
