@@ -169,7 +169,7 @@ fn main_real(args: Args) -> Result<(), Box<dyn Error>> {
         let aligned = ((memory.pc + section.align - 1) / section.align) * section.align;
         if memory.pc != aligned {
             tracing::trace!(
-                "aligning section \"{name}\" from {} to {aligned}",
+                "aligning section \"{name}\" from ${:08X} to ${aligned:08X}",
                 memory.pc
             );
         }
@@ -180,6 +180,7 @@ fn main_real(args: Args) -> Result<(), Box<dyn Error>> {
             .unwrap();
         // we update the section pc to be its absolute start address in memory
         section.pc = aligned;
+        tracing::trace!("placing section \"{name}\" at ${aligned:08X}");
         // add any files to the section
         if let Some(files) = files {
             for path in files {
@@ -188,7 +189,20 @@ fn main_real(args: Args) -> Result<(), Box<dyn Error>> {
                 file.read_to_end(&mut section.data)?;
             }
         }
-        memory.pc = aligned + section.data.len() as u32;
+        // check if section is big or spans multiple banks
+        let section_size = section.data.len() as u32;
+        if section_size > 0x10000 {
+            tracing::warn!("section \"{}\" is larger than 65536 bytes", section.name);
+        }
+        let start_bank = (section.pc & 0xFF0000) >> 16;
+        let end_bank = ((section.pc + section_size) & 0xFF0000) >> 16;
+        if start_bank != end_bank {
+            tracing::warn!(
+                "section \"{}\" starts in bank ${start_bank:02X} and ends in bank ${end_bank:02X}",
+                section.name
+            );
+        }
+        memory.pc = aligned + section_size;
         // the "end" is actually 1 past the last address in the memory
         if memory.pc > memory.end {
             Err(io::Error::new(
@@ -218,7 +232,7 @@ fn main_real(args: Args) -> Result<(), Box<dyn Error>> {
             let size = ld.str_int.intern(&format!("__{name}_SIZE__"));
             syms.push(Sym::new(
                 Label::new(None, size),
-                Expr::Const(section.data.len() as i32),
+                Expr::Const(section_size as i32),
                 def_unit,
                 def_file_section,
                 Pos {
@@ -371,6 +385,7 @@ fn main_real(args: Args) -> Result<(), Box<dyn Error>> {
         }
     }
 
+    // TODO: new symbols format
     if let Some(path) = args.debug {
         tracing::trace!("writing debug symbols");
         let mut file = File::options()
